@@ -1,6 +1,7 @@
 import { GlobalProvider } from '@/lib/global-provider';
 import { useFonts } from 'expo-font';
 import { SplashScreen, Stack } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import "./global.css";
 
@@ -13,18 +14,24 @@ export default function RootLayout() {
     "Rubik-Light" : require('../assets/fonts/Rubik-Light.ttf'),
     "Rubik-ExtraBold" : require('../assets/fonts/Rubik-ExtraBold.ttf'),
   })
+  
   useEffect(() => {
     if (fontsLoaded) {
       SplashScreen.hideAsync();
     }
   }, [fontsLoaded])
+  
   if (!fontsLoaded) {
     return null;
   }
+  
   return (
     <GlobalProvider>
+      <StatusBar
+        style="light"
+        backgroundColor="#000"
+      />
       <Stack screenOptions={{headerShown: false}}/>
     </GlobalProvider>
-  
   );
 }
