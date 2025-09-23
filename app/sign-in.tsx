@@ -1,15 +1,30 @@
+import { login } from "@/lib/appwrite";
 import React from "react";
-import { Image, Text, TouchableOpacity, View, ScrollView } from "react-native";
+import { Alert, Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import icons from "@/constants/icons";   // Importing app icons (e.g., Google logo)
+import icons from "@/constants/icons"; // Importing app icons (e.g., Google logo)
 import images from "@/constants/images"; // Importing app images (e.g., onboarding illustration)
+import { useGlobalContext } from "@/lib/global-provider";
+import { Redirect } from "expo-router";
 
 const SignIn = () => {
+
+  const {refetch, loading, isLogged} = useGlobalContext();
+
+    if(!loading && isLogged) return <Redirect href="/" />;
   // Handle login logic (currently just a console log for demo purposes)
-  const handleLogin = () => {
-    console.log("Login pressed");
-    // TODO: Add Google Sign-In functionality here
+  const handleLogin = async () => {
+    //console.log("Login pressed");
+
+    const result = await login();
+    if(result) {
+      console.log("Login successful");
+      refetch();
+    } else {
+      Alert.alert("Error", "Please try again.")
+      console.log("Login failed");
+    }
   };
 
   return (
