@@ -71,37 +71,39 @@ export const settings = [
   {
     title: "My Bookings",
     icon: icons.calendar,
+    path: "settings/bookings",
   },
   {
     title: "Payments",
     icon: icons.wallet,
-  },
-  {
-    title: "Profile",
-    icon: icons.person,
+    path: "settings/payments",
   },
   {
     title: "Notifications",
     icon: icons.bell,
+    path: "settings/notifications",
   },
   {
     title: "Security",
     icon: icons.shield,
+    path: "settings/security",
   },
   {
     title: "Language",
     icon: icons.language,
+    path: "settings/language",
   },
   {
     title: "Help Center",
     icon: icons.info,
+    path: "/settings/help",
   },
   {
     title: "Invite Friends",
     icon: icons.people,
+    path: "/settings/invite",
   },
 ];
-
 export const facilities = [
   {
     title: "Laundry",

@@ -1,3 +1,4 @@
+import { useRouter } from "expo-router";
 import React from "react";
 import { Alert, Image, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -12,6 +13,7 @@ import SettingItem from "@/components/SettingItem";
 
 const ProfileScreen = () => {
   const { user, refetch } = useGlobalContext();
+  const router = useRouter();
 
   const handleLogout = async () => {
     const result = await logout();
@@ -40,18 +42,19 @@ const ProfileScreen = () => {
           <Avatar name={user?.name} avatar={user?.avatar} />
         </View>
 
-        {/* Settings */}
+        {/* Settings - Dynamic */}
         <View className="flex flex-col mt-10">
-          <SettingItem icon={icons.calendar} title="My Booking" />
-          <SettingItem icon={icons.wallet} title="My Wallet" />
-        </View>
-
-        <View className="flex flex-col mt-5 border-t pt-5 border-primary-200">
-          {settings.slice(2).map((item, index) => (
-            <SettingItem key={index} {...item} />
+          {settings.map((item, index) => (
+            <SettingItem
+              key={index}
+              icon={item.icon}
+              title={item.title}
+              onPress={() => router.push(item.path as any)}
+            />
           ))}
         </View>
 
+        {/* Logout */}
         <View className="flex flex-col mt-5 border-t pt-5 border-primary-200">
           <SettingItem
             icon={icons.logout}
