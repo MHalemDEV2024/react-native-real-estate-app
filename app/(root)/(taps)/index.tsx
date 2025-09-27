@@ -1,11 +1,11 @@
 /**
  * Home Screen
  * -----------------------------------------------------------------------------
- * This screen displays:
+ * Shows:
  *  - User greeting with Avatar
  *  - Search bar
- *  - Featured section (horizontal list)
- *  - Recommended section (with filters and vertical grid of cards)
+ *  - Featured section (horizontal carousel)
+ *  - Recommended section (filters + vertical grid)
  *
  * Tech Stack:
  *  - React Native + Expo Router
@@ -13,9 +13,10 @@
  *  - FlatList for performant list rendering
  */
 
-import { useRouter } from "expo-router";
-import React from "react";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import React, { useEffect } from "react";
 import {
+  ActivityIndicator,
   FlatList,
   Image,
   ListRenderItem,
@@ -28,10 +29,14 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Avatar from "@/components/Avatar";
 import { Card, FeaturedCard } from "@/components/Card";
 import Filters from "@/components/Filters";
+import NoResults from "@/components/NoResults";
 import Search from "@/components/Search";
 import icons from "@/constants/icons";
+import { getLatestProperties, getProperties } from "@/lib/appwrite";
 import { useGlobalContext } from "@/lib/global-provider";
+import { useAppwrite } from "@/lib/useAppwrite";
 import { formatName } from "@/utils/nameUtils";
+import { Models } from "react-native-appwrite";
 
 /* -------------------------------------------------------------------------- */
 /*                               MAIN COMPONENT                               */
@@ -40,15 +45,47 @@ import { formatName } from "@/utils/nameUtils";
 const Index: React.FC = () => {
   const { user } = useGlobalContext();
   const router = useRouter();
+  const params = useLocalSearchParams<{ query?: string; filter?: string }>();
 
-  /** Dummy data – replace with API response */
-  const recommendationData = [1, 2, 3, 4, 5, 6];
-  const featuredData = [1, 2, 3];
+  // Featured (latest) properties
+  const {
+    data: latestProperties,
+    loading: latestLoading,
+  } = useAppwrite({
+    fn: getLatestProperties,
+  });
+
+  // Recommended properties (with filters)
+  const {
+    data: properties,
+    loading,
+    refetch,
+  } = useAppwrite({
+    fn: getProperties,
+    params: {
+      filter: params.filter!,
+      query: params.query!,
+      limit: 6,
+    },
+    skip: true,
+  });
+
+  // Refetch when filter or query changes
+  useEffect(() => {
+    refetch({
+      filter: params.filter!,
+      query: params.query!  ,
+      limit: 6,
+    });
+  }, [params.filter, params.query]);
+
+  /** Data Sources ----------------------------------------------------------- */
+  const recommendedData = properties || [];
+  const featuredData = latestProperties || [];
 
   /** Handlers --------------------------------------------------------------- */
-  const handleCardPress = (id: number) => {
-    // TODO: Implement navigation to card detail
-    console.log("Card pressed:", id);
+  const handleCardPress = (id: string) => {
+    router.push(`/properties/${id}`);
   };
 
   const handleProfilePress = () => {
@@ -56,18 +93,17 @@ const Index: React.FC = () => {
   };
 
   const handleNotificationPress = () => {
-    // TODO: Implement notification screen navigation
+    // TODO: Navigate to notifications screen
     console.log("Notifications pressed");
   };
 
-  /* ------------------------------------------------------------------------ */
-
-  const renderRecommendationCard: ListRenderItem<number> = ({ item }) => (
-    <Card onPress={() => handleCardPress(item)} />
+  /** Renderers -------------------------------------------------------------- */
+  const renderRecommendationCard: ListRenderItem<Models.Document> = ({ item }) => (
+    <Card item={item} onPress={() => handleCardPress(item.$id)} />
   );
 
-  const renderFeaturedCard: ListRenderItem<number> = ({ item }) => (
-    <FeaturedCard onPress={() => handleCardPress(item)} />
+  const renderFeaturedCard: ListRenderItem<Models.Document> = ({ item }) => (
+    <FeaturedCard item={item} onPress={() => handleCardPress(item.$id)} />
   );
 
   /* ------------------------------------------------------------------------ */
@@ -75,20 +111,25 @@ const Index: React.FC = () => {
   return (
     <SafeAreaView className="flex-1 bg-white">
       <FlatList
-        data={recommendationData}
+        data={recommendedData}
         renderItem={renderRecommendationCard}
-        keyExtractor={(item) => item.toString()}
+        keyExtractor={(item) => item.$id}
         numColumns={2}
         contentContainerClassName="pb-32"
         columnWrapperClassName="flex gap-5 px-5"
         showsVerticalScrollIndicator={false}
+        ListEmptyComponent={
+           loading ? (
+            <ActivityIndicator size="large" className="text-primary-300 mt-5" />
+          ) : (
+            <NoResults />
+          )
+        }
         ListHeaderComponent={
           <View className="px-5">
-            {/* -----------------------------------------------------------------
-               HEADER SECTION
-            ----------------------------------------------------------------- */}
+            {/* Header Section */}
             <View className="flex flex-row items-center justify-between">
-              {/* User Avatar & Greeting */}
+              {/* User Avatar + Greeting */}
               <TouchableOpacity
                 className="flex flex-row items-center"
                 onPress={handleProfilePress}
@@ -101,39 +142,29 @@ const Index: React.FC = () => {
                   editable={false}
                   minimal
                 />
-
                 <View className="ml-2">
                   <Text className="text-xs font-rubik text-black-100">
                     Good Morning
                   </Text>
                   <Text className="text-base font-rubik-medium text-black-300">
-                    {formatName(user?.name)}
+                    {formatName(user?.name || "Guest")}
                   </Text>
                 </View>
               </TouchableOpacity>
 
               {/* Notifications */}
-              <TouchableOpacity
-                onPress={handleNotificationPress}
-                activeOpacity={0.7}
-              >
+              <TouchableOpacity onPress={handleNotificationPress} activeOpacity={0.7}>
                 <Image source={icons.bell} className="size-6" />
               </TouchableOpacity>
             </View>
 
-            {/* -----------------------------------------------------------------
-               SEARCH
-            ----------------------------------------------------------------- */}
+            {/* Search */}
             <Search />
 
-            {/* -----------------------------------------------------------------
-               FEATURED SECTION
-            ----------------------------------------------------------------- */}
+            {/* Featured Section */}
             <View className="my-5">
               <View className="flex flex-row items-center justify-between">
-                <Text className="text-xl font-rubik-bold text-black-300">
-                  Featured
-                </Text>
+                <Text className="text-xl font-rubik-bold text-black-300">Featured</Text>
                 <TouchableOpacity activeOpacity={0.7}>
                   <Text className="text-base font-rubik-bold text-primary-300">
                     See all
@@ -141,20 +172,24 @@ const Index: React.FC = () => {
                 </TouchableOpacity>
               </View>
 
-              <FlatList
-                data={featuredData}
-                renderItem={renderFeaturedCard}
-                keyExtractor={(item) => item.toString()}
-                horizontal
-                bounces={false}
-                showsHorizontalScrollIndicator={false}
-                contentContainerClassName="flex gap-5 mt-5"
-              />
+              {latestLoading ? (
+                <ActivityIndicator size="large" className="text-primary-300 mt-5" />
+              ) : featuredData.length === 0 ? (
+                <NoResults />
+              ) : (
+                <FlatList
+                  data={featuredData}
+                  renderItem={renderFeaturedCard}
+                  keyExtractor={(item) => item.$id}
+                  horizontal
+                  bounces={false}
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerClassName="flex gap-5 mt-5"
+                />
+              )}
             </View>
 
-            {/* -----------------------------------------------------------------
-               RECOMMENDATION SECTION
-            ----------------------------------------------------------------- */}
+            {/* Recommendation Section */}
             <View className="flex flex-row items-center justify-between mb-3">
               <Text className="text-xl font-rubik-bold text-black-300">
                 Our Recommendation
