@@ -31,7 +31,6 @@ import Filters from "@/components/Filters";
 import Search from "@/components/Search";
 import icons from "@/constants/icons";
 import { useGlobalContext } from "@/lib/global-provider";
-import seed from "@/lib/seed";
 import { formatName } from "@/utils/nameUtils";
 
 /* -------------------------------------------------------------------------- */
@@ -75,9 +74,6 @@ const Index: React.FC = () => {
 
   return (
     <SafeAreaView className="flex-1 bg-white">
-      <TouchableOpacity onPress={seed} className="bg-blue-500 p-3 m-5 rounded">
-        <Text className="text-white text-center font-bold">Seed</Text>
-      </TouchableOpacity>
       <FlatList
         data={recommendationData}
         renderItem={renderRecommendationCard}
