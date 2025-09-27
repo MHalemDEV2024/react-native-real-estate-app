@@ -1,20 +1,57 @@
-import icons from "@/constants/icons";
+/**
+ * Avatar Component
+ * -----------------------------------------------------------------------------
+ * Displays a circular user avatar.
+ *  - Shows uploaded image if available
+ *  - Falls back to initials with color background
+ *  - Supports inline editing via Image Picker
+ *
+ * Props:
+ *  - name?: string               → User’s name (for initials & color)
+ *  - avatar?: string             → Existing avatar URI
+ *  - onImageChange?: (uri) => {} → Callback when a new image is selected
+ *  - size?: number               → Avatar size in pixels
+ *  - editable?: boolean          → Enable edit button
+ *  - minimal?: boolean           → Hide edit button & name label
+ */
+
+import React, { useState, useCallback } from "react";
+import { View, Text, Image, TouchableOpacity } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import React, { useState } from "react";
-import { Image, Text, TouchableOpacity, View } from "react-native";
-import { formatName, getColorFromName, getInitials } from "../utils/nameUtils";
+
+import icons from "@/constants/icons";
+import { formatName, getColorFromName, getInitials } from "@/utils/nameUtils";
+
+/* -------------------------------------------------------------------------- */
+/*                              TYPE DEFINITIONS                               */
+/* -------------------------------------------------------------------------- */
 
 interface AvatarProps {
   name?: string;
   avatar?: string;
   onImageChange?: (uri: string) => void;
+  size?: number;
+  editable?: boolean;
+  minimal?: boolean;
 }
 
-const Avatar = ({ name, avatar, onImageChange }: AvatarProps) => {
+/* -------------------------------------------------------------------------- */
+/*                               AVATAR COMPONENT                              */
+/* -------------------------------------------------------------------------- */
+
+const Avatar: React.FC<AvatarProps> = ({
+  name,
+  avatar,
+  onImageChange,
+  size = 176,
+  editable = true,
+  minimal = false,
+}) => {
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [imageError, setImageError] = useState(false);
 
-  const pickImage = async () => {
+  /* -------------------------- IMAGE PICKER HANDLER ------------------------- */
+  const pickImage = useCallback(async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) return;
 
@@ -26,40 +63,56 @@ const Avatar = ({ name, avatar, onImageChange }: AvatarProps) => {
     });
 
     if (!result.canceled) {
-      const selectedUri = result.assets[0].uri;
-      setImageUri(selectedUri);
+      const uri = result.assets[0].uri;
+      setImageUri(uri);
       setImageError(false);
-      onImageChange?.(selectedUri);
+      onImageChange?.(uri);
     }
-  };
+  }, [onImageChange]);
 
+  /* ---------------------------- AVATAR CONTENT ----------------------------- */
+  const avatarContent =
+    imageUri || (avatar && !imageError) ? (
+      <Image
+        source={{ uri: imageUri || avatar }}
+        className="rounded-full"
+        style={{ width: size, height: size }}
+        onError={() => setImageError(true)}
+      />
+    ) : (
+      <View
+        className="rounded-full flex items-center justify-center"
+        style={{
+          width: size,
+          height: size,
+          backgroundColor: getColorFromName(name),
+        }}
+      >
+        <Text className="text-white font-rubik-bold" style={{ fontSize: size / 3 }}>
+          {getInitials(name)}
+        </Text>
+      </View>
+    );
+
+  /* ------------------------------ RENDER ----------------------------------- */
   return (
-    <View className="flex flex-col items-center relative mt-5">
-      {(imageUri || (avatar && !imageError)) ? (
-        <Image
-          source={{ uri: imageUri || avatar }}
-          className="size-44 rounded-full"
-          onError={() => setImageError(true)}
-        />
-      ) : (
-        <View
-          className="size-44 rounded-full flex items-center justify-center"
-          style={{ backgroundColor: getColorFromName(name) }}
+    <View className="relative items-center">
+      {avatarContent}
+
+      {!minimal && editable && (
+        <TouchableOpacity
+          className="absolute bg-white p-2 rounded-full shadow"
+          style={{ bottom: size / 6, right: size / 6 }}
+          onPress={pickImage}
+          activeOpacity={0.7}
         >
-          <Text className="text-4xl font-rubik-bold text-white">
-            {getInitials(name)}
-          </Text>
-        </View>
+          <Image source={icons.edit} className="w-6 h-6" />
+        </TouchableOpacity>
       )}
 
-      <TouchableOpacity
-        className="absolute bottom-12 right-9 bg-white p-2 rounded-full shadow"
-        onPress={pickImage}
-      >
-        <Image source={icons.edit} className="size-6" />
-      </TouchableOpacity>
-
-      <Text className="text-2xl font-rubik-bold mt-2">{formatName(name)}</Text>
+      {!minimal && (
+        <Text className="text-2xl font-rubik-bold mt-2">{formatName(name)}</Text>
+      )}
     </View>
   );
 };
