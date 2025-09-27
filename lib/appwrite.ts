@@ -1,13 +1,19 @@
 // src/lib/appwrite.ts
 import * as Linking from "expo-linking";
 import { openAuthSessionAsync } from "expo-web-browser";
-import { Account, Avatars, Client, OAuthProvider } from "react-native-appwrite";
+import { Account, Avatars, Client, Databases, OAuthProvider } from "react-native-appwrite";
 
 // ✅ Use environment variables instead of hardcoded values
 export const config = {
   platform: process.env.EXPO_PUBLIC_APPWRITE_PLATFORM!,
   endpoint: process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT!, 
   projectId: process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID!,
+  databaseId: process.env.EXPO_PUBLIC_APPWRITE_DATABASE_ID!,
+  galleriesCollectionId: process.env.EXPO_PUBLIC_APPWRITE_GALLERIES_COLLECTION_ID!,
+  reviwsCollectionId: process.env.EXPO_PUBLIC_APPWRITE_REVIEWS_COLLECTION_ID!,
+  agentsCollectionId: process.env.EXPO_PUBLIC_APPWRITE_AGENTS_COLLECTION_ID!,
+  propertiesCollectionId: process.env.EXPO_PUBLIC_APPWRITE_PROPERTIES_COLLECTION_ID!,
+ 
 };
 
 // ✅ Initialize Appwrite client
@@ -18,6 +24,7 @@ export const client = new Client()
 
 export const account = new Account(client);
 export const avatar = new Avatars(client);
+export const database = new Databases(client);
 
 // ✅ Login with Google OAuth
 export async function login() {
