@@ -104,41 +104,18 @@ export const settings = [
     path: "/settings/invite",
   },
 ];
-export const facilities = [
-  {
-    title: "Laundry",
-    icon: icons.laundry,
-  },
-  {
-    title: "Car Parking",
-    icon: icons.carPark,
-  },
-  {
-    title: "Sports Center",
-    icon: icons.run,
-  },
-  {
-    title: "Cutlery",
-    icon: icons.cutlery,
-  },
-  {
-    title: "Gym",
-    icon: icons.dumbell,
-  },
-  {
-    title: "Swimming pool",
-    icon: icons.swim,
-  },
-  {
-    title: "Wifi",
-    icon: icons.wifi,
-  },
-  {
-    title: "Pet Center",
-    icon: icons.dog,
-  },
-];
 
+export const facilities = [
+  { title: "Laundry", icon: icons.laundry },
+  { title: "Parking", icon: icons.carPark },       
+  { title: "Sport", icon: icons.run },             
+  { title: "Gym", icon: icons.dumbell },
+  { title: "Swimming", icon: icons.swim },         
+  { title: "Wifi", icon: icons.wifi },
+  { title: "Pet", icon: icons.dog },               
+  { title: "Cutlery", icon: icons.cutlery },
+  { title: "Restaurant", icon: icons.cutlery },     
+];
 export const gallery = [
   {
     id: 1,

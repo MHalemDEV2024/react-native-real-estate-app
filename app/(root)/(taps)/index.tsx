@@ -136,7 +136,7 @@ const Index: React.FC = () => {
                 activeOpacity={0.8}
               >
                 <Avatar
-                  name={user?.name}
+                  name={user?.name || "Guest"}
                   avatar={user?.avatar}
                   size={48}
                   editable={false}

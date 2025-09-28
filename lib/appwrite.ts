@@ -3,6 +3,7 @@ import * as Linking from "expo-linking";
 import { openAuthSessionAsync } from "expo-web-browser";
 import { Account, Avatars, Client, Databases, OAuthProvider, Query } from "react-native-appwrite";
 
+
 // ✅ Use environment variables instead of hardcoded values
 export const config = {
   platform: process.env.EXPO_PUBLIC_APPWRITE_PLATFORM!,
@@ -24,7 +25,7 @@ export const client = new Client()
 
 export const account = new Account(client);
 export const avatar = new Avatars(client);
-export const database = new Databases(client);
+export const databases = new Databases(client);
 
 // ✅ Login with Google OAuth
 export async function login() {
@@ -83,7 +84,7 @@ export async function getCurrentUser() {
 // ✅ Fetch the latest properties (default: 5)
 export async function getLatestProperties() {
   try {
-    const result = await database.listDocuments(
+    const result = await databases.listDocuments(
       config.databaseId!,
       config.propertiesCollectionId!,
       [
@@ -134,7 +135,7 @@ export async function getProperties({
       buildQuery.push(Query.limit(limit));
     }
 
-    const result = await database.listDocuments(
+    const result = await databases.listDocuments(
       config.databaseId!,
       config.propertiesCollectionId!,
       buildQuery,
@@ -148,5 +149,73 @@ export async function getProperties({
       console.error("[Appwrite GetProperties Error] Unexpected:", error);
     }
     return null;
+  }
+}
+
+// ✅ Fetch a property by ID with its agent, gallery, and reviews
+export async function getPropertyById({ id }: { id: string }) {
+  try {
+    // 1. Fetch the property itself
+    const property = await databases.getDocument(
+      config.databaseId,
+      config.propertiesCollectionId,
+      id
+    );
+
+    // 2. Fetch the agent
+    let agent = null;
+    if (property.agent && typeof property.agent === "string") {
+      // If only an ID is stored
+      agent = await databases.getDocument(
+        config.databaseId,
+        config.agentsCollectionId,
+        property.agent
+      );
+    } else {
+      // If full object is already embedded
+      agent = property.agent;
+    }
+
+    // 3. Fetch gallery (if stored in a separate collection)
+    let gallery: any[] = [];
+    if (property.galleryCollectionId) {
+      const galleryRes = await databases.listDocuments(
+        config.databaseId,
+        property.galleryCollectionId
+      );
+      gallery = galleryRes.documents;
+    } else {
+      gallery = property.gallery || [];
+    }
+
+    // 4. Fetch reviews
+    let reviews: any[] = [];
+    if (property.reviews && Array.isArray(property.reviews)) {
+      // If property stores an array of review IDs
+      const fetched = await Promise.all(
+        property.reviews.map((revId: string) =>
+          databases.getDocument(config.databaseId, config.reviewsCollectionId, revId)
+        )
+      );
+      reviews = fetched;
+    } else if (property.reviewsCollectionId) {
+      // If there is a dedicated collection
+      const reviewsRes = await databases.listDocuments(
+        config.databaseId,
+        property.reviewsCollectionId
+      );
+      reviews = reviewsRes.documents;
+    }
+
+    // 5. Return combined data
+    return {
+      ...property,
+      agent,
+      gallery,
+      reviews,
+    };
+  } catch (err) {
+    console.error("❌ Failed to fetch property:", err);
+    throw err;
   }
 }
